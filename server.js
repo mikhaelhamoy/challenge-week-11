@@ -30,8 +30,21 @@ function createNewNote (body, notesArray) {
     return body;
 }
 
+function deleteNote (body, notesArray) {
+    const note = body;
+    notesArray.splice(notesArray.lastIndexOf(note) ,1);
+
+    fs.writeFileSync(
+        path.join(__dirname, './db/db.json'),
+        JSON.stringify({ notes: notesArray }, null, 2)
+    );
+}
+
 function validateNote(note) {
     if (!note.title || typeof note.title !== 'string') {
+        return false;
+    }
+    if (!note.text || typeof note.text !== 'string') {
         return false;
     }
     return true;
@@ -55,7 +68,10 @@ app.get('/api/notes/:id', (req, res) => {
 });
 
 app.post('/api/notes', (req, res) => {
-    req.body.id = notes.length.toString();
+    if(notes.length === 0)
+        req.body.id = '0';
+    else
+        req.body.id = (parseInt(notes[notes.length - 1].id) + 1).toString();
 
     if (!validateNote(req.body)) {
         res.status(400).send("The note is not properly formatted.")
@@ -66,7 +82,9 @@ app.post('/api/notes', (req, res) => {
 });
 
 app.delete('/api/notes/:id', (req, res) => {
-
+    const result = findById(req.params.id, notes);
+    deleteNote(result, notes);
+    res.send('DELETE request to homepage');
 });
 
 app.get('/notes', (req, res) => {
